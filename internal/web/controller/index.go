@@ -159,8 +159,7 @@ func (a *IndexController) login(c *gin.Context) {
 		return
 	}
 
-	jsonMsgObj(c, I18nWeb(c, "pages.login.toasts.successLogin"),
-		gin.H{"needChangePassword": usesDefaultPassword(user)}, nil)
+	jsonMsg(c, I18nWeb(c, "pages.login.toasts.successLogin"), nil)
 }
 
 func loginFailureReason(err error) string {

@@ -3,10 +3,8 @@ package controller
 import (
 	"net/http"
 	"strings"
-	"sync"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
-	"github.com/mhsanaei/3x-ui/v3/internal/util/crypto"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/middleware"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/panel"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/tgbot"
@@ -79,52 +77,6 @@ func (a *APIController) checkAPIAuth(c *gin.Context) {
 		return
 	}
 	c.Next()
-}
-
-// DefaultPanelPassword 是出厂默认密码：命中它之后，除改密接口外一律 403。
-const DefaultPanelPassword = "123456"
-
-// defaultPasswordCache 缓存"该用户是否仍用默认密码"，避免每个请求都跑一次 bcrypt。
-var defaultPasswordCache sync.Map // userId -> bool
-
-// ResetDefaultPasswordCache 在密码变更后清缓存（改密成功后调用）。
-func ResetDefaultPasswordCache(userId int) { defaultPasswordCache.Delete(userId) }
-
-func usesDefaultPassword(user *model.User) bool {
-	if user == nil || user.Password == "" {
-		return false
-	}
-	if v, ok := defaultPasswordCache.Load(user.Id); ok {
-		return v.(bool)
-	}
-	hit := crypto.CheckPasswordHash(user.Password, DefaultPanelPassword)
-	defaultPasswordCache.Store(user.Id, hit)
-	return hit
-}
-
-// requirePasswordChange 在"仍使用默认密码"时锁死面板 API，只留改密与登出。
-func (a *APIController) requirePasswordChange(c *gin.Context) {
-	// API token 调用不受影响（自动化/门户用它拉数据）
-	if c.GetBool("api_authed") {
-		c.Next()
-		return
-	}
-	user := session.GetLoginUser(c)
-	if user == nil || !usesDefaultPassword(user) {
-		c.Next()
-		return
-	}
-	switch c.FullPath() {
-	case "/panel/api/setting/updateUser", "/panel/api/setting/all",
-		"/panel/api/setting/defaultSettings", "/panel/api/server/status":
-		c.Next()
-		return
-	}
-	c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-		"success": false,
-		"msg":     "首次登录必须先修改默认密码",
-		"obj":     gin.H{"needChangePassword": true},
-	})
 }
 
 // monitorScopeAllow exposes only status/metrics routes without sensitive data.
@@ -245,7 +197,6 @@ func (a *APIController) initRouter(g *gin.RouterGroup) {
 	api := g.Group("/panel/api")
 	api.Use(a.checkAPIAuth)
 	api.Use(a.enforceTokenScope)
-	api.Use(a.requirePasswordChange)
 	// Decode + verify the node config envelope (zstd + X-Config-Sha256) and
 	// advertise support, before CSRF/handlers read the body.
 	api.Use(middleware.ConfigEnvelopeMiddleware())

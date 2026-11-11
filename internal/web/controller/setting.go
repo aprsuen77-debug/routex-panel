@@ -215,7 +215,6 @@ func (a *SettingController) updateUser(c *gin.Context) {
 	}
 	err = a.userService.UpdateUser(user.Id, form.NewUsername, form.NewPassword)
 	if err == nil {
-		ResetDefaultPasswordCache(user.Id)
 		user.Username = form.NewUsername
 		user.Password, _ = crypto.HashPasswordAsBcrypt(form.NewPassword)
 		if saveErr := session.SetLoginUser(c, user); saveErr != nil {

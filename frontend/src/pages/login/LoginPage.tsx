@@ -7,7 +7,6 @@ import {
   Input,
   Layout,
   Menu,
-  Modal,
   Popover,
   Space,
   Spin,
@@ -55,11 +54,6 @@ export default function LoginPage() {
     defaultValues: { username: '', password: '', twoFactorCode: '' },
   });
   const [lang, setLang] = useState<string>(() => LanguageManager.getLanguage());
-  // routex：首次登录（密码仍是 123456）强制改密，改完才放行
-  const [pwChange, setPwChange] = useState<{ username: string; oldPassword: string } | null>(null);
-  const [newPw, setNewPw] = useState('');
-  const [newPw2, setNewPw2] = useState('');
-  const [pwSubmitting, setPwSubmitting] = useState(false);
 
   const headlineWords = useMemo(() => [t('pages.login.hello'), t('pages.login.title')], [t]);
 
@@ -86,53 +80,12 @@ export default function LoginPage() {
   const onSubmit = useCallback(async (values: LoginForm) => {
     setSubmitting(true);
     try {
-      const msg = (await HttpUtil.post('/login', values)) as {
-        success: boolean;
-        obj?: { needChangePassword?: boolean };
-      };
-      if (msg.success) {
-        if (msg.obj?.needChangePassword) {
-          setPwChange({ username: values.username, oldPassword: values.password });
-        } else {
-          window.location.href = basePath + 'panel/';
-        }
-      }
+      const msg = await HttpUtil.post('/login', values);
+      if (msg.success) window.location.href = basePath + 'panel/';
     } finally {
       setSubmitting(false);
     }
   }, []);
-
-  const submitNewPassword = useCallback(async () => {
-    if (!pwChange) return;
-    if (newPw.length < 6) {
-      messageApi.error('新密码至少 6 位');
-      return;
-    }
-    if (newPw !== newPw2) {
-      messageApi.error('两次输入的新密码不一致');
-      return;
-    }
-    setPwSubmitting(true);
-    try {
-      const msg = await HttpUtil.post('/panel/api/setting/updateUser', {
-        oldUsername: pwChange.username,
-        oldPassword: pwChange.oldPassword,
-        newUsername: pwChange.username,
-        newPassword: newPw,
-        twoFactorCode: '',
-      });
-      if (msg.success) {
-        // 改密会让后端重建 session 与 CSRF，直接跳面板会被弹回登录页，
-        // 所以这里明确提示并用新密码重新登录一次。
-        messageApi.success('密码已更新，请用新密码重新登录');
-        window.setTimeout(() => {
-          window.location.reload();
-        }, 1600);
-      }
-    } finally {
-      setPwSubmitting(false);
-    }
-  }, [pwChange, newPw, newPw2, messageApi]);
 
   const onLangChange = useCallback((next: string) => {
     setLang(next);
@@ -307,49 +260,6 @@ export default function LoginPage() {
           </div>
         </Layout.Content>
       </Layout>
-
-      <Modal
-        open={!!pwChange}
-        title="首次登录 · 请设置新密码"
-        closable={false}
-        maskClosable={false}
-        keyboard={false}
-        footer={null}
-        centered
-        destroyOnHidden
-      >
-        <p style={{ color: '#64748b', marginTop: 0, fontSize: 13, lineHeight: 1.7 }}>
-          当前账户仍在使用出厂默认密码 <b>123456</b>。为保障面板安全，必须设置新密码后才能进入后台。
-        </p>
-        <div style={{ marginTop: 16 }}>
-          <Input.Password
-            size="large"
-            placeholder="新密码（至少 6 位）"
-            value={newPw}
-            onChange={(e) => setNewPw(e.target.value)}
-            autoFocus
-          />
-        </div>
-        <div style={{ marginTop: 12 }}>
-          <Input.Password
-            size="large"
-            placeholder="确认新密码"
-            value={newPw2}
-            onChange={(e) => setNewPw2(e.target.value)}
-            onPressEnter={submitNewPassword}
-          />
-        </div>
-        <Button
-          type="primary"
-          size="large"
-          block
-          style={{ marginTop: 18 }}
-          loading={pwSubmitting}
-          onClick={submitNewPassword}
-        >
-          保存并进入面板
-        </Button>
-      </Modal>
     </ConfigProvider>
   );
 }
