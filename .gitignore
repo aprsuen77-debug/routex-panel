@@ -1,0 +1,13 @@
+# 构建依赖与产物（构建时由 npm run build 生成）
+node_modules/
+frontend/node_modules/
+internal/web/dist/*
+!internal/web/dist/.gitkeep
+dist/
+*.tgz
+*.bak
+*.bak.*
+
+# 本地环境
+.env.local
+.DS_Store
