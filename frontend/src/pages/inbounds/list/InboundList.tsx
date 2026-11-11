@@ -16,6 +16,7 @@ import {
   type MenuProps,
 } from 'antd';
 import {
+  EditOutlined,
   PlusOutlined,
   MenuOutlined,
   MoreOutlined,
@@ -64,6 +65,7 @@ export default function InboundList({
   onGeneralAction,
   onRowAction,
   onBulkDelete,
+  onBulkRename,
 }: InboundListProps) {
   const { t } = useTranslation();
   const [statsRecord, setStatsRecord] = useState<DBInboundRecord | null>(null);
@@ -270,6 +272,15 @@ export default function InboundList({
                 {t('pages.inbounds.selectedCount', { count: selectedRowKeys.length })}
               </Tag>
               <Button
+                icon={<EditOutlined aria-hidden />}
+                onClick={() => {
+                  void onBulkRename(selectedRowKeys);
+                }}
+                aria-label="重命名"
+              >
+                {!isMobile && '重命名'}
+              </Button>
+              <Button
                 danger
                 icon={<DeleteOutlined aria-hidden />}
                 onClick={handleBulkDelete}
@@ -301,7 +312,24 @@ export default function InboundList({
                     {t('pages.inbounds.selectAll')}
                   </Checkbox>
                   {selectedRowKeys.length > 0 && (
-                    <span className="bulk-count">{selectedRowKeys.length}</span>
+                    <>
+                      <span className="bulk-count">{selectedRowKeys.length}</span>
+                      <Button
+                        size="small"
+                        icon={<EditOutlined aria-hidden />}
+                        onClick={() => {
+                          void onBulkRename(selectedRowKeys);
+                        }}
+                      >
+                        重命名
+                      </Button>
+                      <Button
+                        size="small"
+                        danger
+                        icon={<DeleteOutlined aria-hidden />}
+                        onClick={handleBulkDelete}
+                      />
+                    </>
                   )}
                 </div>
                 {visibleInbounds.map((record) => (

@@ -5,6 +5,7 @@ import {
   Card,
   Col,
   ConfigProvider,
+  Input,
   Layout,
   Modal,
   Result,
@@ -531,6 +532,75 @@ export default function InboundsPage() {
     [modal, refresh, t, messageApi],
   );
 
+  // 批量重命名：逐个 GET 完整配置 → 只改 remark → 回写（clients 由后端保留）
+  const confirmBulkRename = useCallback(
+    (ids: number[]) =>
+      new Promise<boolean>((resolve) => {
+        if (ids.length === 0) {
+          resolve(false);
+          return;
+        }
+        let input = '';
+        modal.confirm({
+          title: ids.length === 1 ? '重命名节点' : `批量重命名 ${ids.length} 个节点`,
+          content: (
+            <div>
+              <Input
+                placeholder="新名称，例如 香港-01（多个时自动追加序号）"
+                defaultValue={ids.length === 1 ? '' : '节点'}
+                onChange={(e: { target: { value: string } }) => {
+                  input = e.target.value;
+                }}
+                autoFocus
+              />
+              <div style={{ marginTop: 8, fontSize: 12, color: '#8a97a8' }}>
+                改完会立刻同步到订阅和 8080 门户（门户最多 15 秒刷新）。
+              </div>
+            </div>
+          ),
+          okText: '保存',
+          cancelText: t('cancel'),
+          onOk: async () => {
+            const base = (input || '').trim();
+            if (!base) return;
+            let ok = 0;
+            let failed = 0;
+            for (let i = 0; i < ids.length; i++) {
+              const id = ids[i];
+              const name = ids.length === 1 ? base : `${base}-${String(i + 1).padStart(2, '0')}`;
+              try {
+                const got = await HttpUtil.get(`/panel/api/inbounds/get/${id}`);
+                const dbInbound = got?.obj as
+                  | (Record<string, unknown> & {
+                      settings?: unknown;
+                      streamSettings?: unknown;
+                      sniffing?: unknown;
+                    })
+                  | undefined;
+                if (!dbInbound) {
+                  failed++;
+                  continue;
+                }
+                // 原样回传完整配置，只改 remark：settings 等字段 API 给什么就传什么
+                const body = { ...dbInbound, remark: name };
+                const res = await HttpUtil.post(`/panel/api/inbounds/update/${id}`, body);
+                if (res?.success) ok++;
+                else failed++;
+              } catch {
+                failed++;
+              }
+            }
+            if (failed === 0) messageApi.success(`已重命名 ${ok} 个节点`);
+            else messageApi.warning(`成功 ${ok} 个，失败 ${failed} 个`);
+            await refresh();
+            resolve(true);
+          },
+          onCancel: () => resolve(false),
+        });
+      }),
+    [modal, refresh, t, messageApi],
+  );
+
   const confirmResetTraffic = useCallback(
     (dbInbound: DBInbound) => {
       modal.confirm({
@@ -804,6 +874,7 @@ export default function InboundsPage() {
                         onRowAction({ key, dbInbound: dbInbound as unknown as DBInbound })
                       }
                       onBulkDelete={confirmBulkDelete}
+                      onBulkRename={confirmBulkRename}
                     />
                   </Col>
                 </Row>

@@ -132,3 +132,112 @@
 .hosts-page .ant-card .ant-card-actions {
   background: transparent;
 }
+
+/* ---------- routex 视觉强化（浅色） ---------- */
+/* 统一卡片：更柔和的圆角 + 双层阴影，hover 轻微抬升 */
+body.light .ant-card {
+  border-radius: 14px !important;
+  border: 1px solid #eef1f6 !important;
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 8px 24px rgba(16, 24, 40, 0.05) !important;
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.2s ease;
+}
+
+body.light .ant-card-hoverable:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px rgba(16, 24, 40, 0.05),
+    0 14px 36px rgba(16, 24, 40, 0.08) !important;
+}
+
+/* 表格：圆角裁切 + 更轻的表头 */
+body.light .ant-table-wrapper .ant-table {
+  border-radius: 12px;
+}
+
+body.light .ant-table-wrapper .ant-table-thead > tr > th {
+  background: #f7f9fc !important;
+  font-weight: 600;
+  font-size: 12.5px;
+  color: #64748b !important;
+  border-bottom: 1px solid #eef1f6 !important;
+}
+
+body.light .ant-table-wrapper .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f2f5fa;
+}
+
+body.light .ant-table-wrapper .ant-table-tbody > tr:hover > td {
+  background: #f7f9fc !important;
+}
+
+/* 按钮/输入：圆角与高度统一 */
+body.light .ant-btn {
+  border-radius: 9px;
+  font-weight: 500;
+}
+body.light .ant-btn-primary {
+  box-shadow: 0 3px 10px rgba(43, 108, 255, 0.22);
+}
+body.light .ant-input,
+body.light .ant-input-affix-wrapper,
+body.light .ant-select-selector,
+body.light .ant-input-number {
+  border-radius: 9px !important;
+}
+
+/* 标签/徽章 */
+body.light .ant-tag {
+  border-radius: 7px;
+  font-weight: 500;
+}
+
+/* 弹窗/抽屉 */
+body.light .ant-modal-content,
+body.light .ant-drawer-content {
+  border-radius: 16px;
+}
+body.light .ant-drawer-content {
+  border-radius: 0 16px 16px 0;
+}
+
+/* 侧边栏选中态：淡蓝胶囊 */
+body.light .sider-nav .ant-menu-item-selected,
+body.light .sider-utility .ant-menu-item-selected {
+  background: rgba(43, 108, 255, 0.10) !important;
+  color: #2b6cff !important;
+  font-weight: 600;
+}
+body.light .sider-nav .ant-menu-item:hover {
+  background: rgba(43, 108, 255, 0.06) !important;
+}
+
+/* 统计数字：更紧凑 */
+body.light .ant-statistic-content {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.4px;
+}
+
+/* ---------- 移动端适配 ---------- */
+@media (max-width: 768px) {
+  body.light .ant-card {
+    border-radius: 12px !important;
+  }
+  body.light .ant-card-body {
+    padding: 14px !important;
+  }
+  body.light .ant-table-wrapper .ant-table-thead > tr > th,
+  body.light .ant-table-wrapper .ant-table-tbody > tr > td {
+    padding: 8px 10px !important;
+    font-size: 12.5px;
+  }
+  body.light .ant-btn {
+    padding-inline: 12px;
+  }
+  body.light .ant-space-gap-col-small {
+    row-gap: 6px;
+  }
+}
